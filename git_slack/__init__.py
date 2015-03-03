@@ -1,0 +1,1 @@
+""""Git-Slack application module"""
