@@ -94,13 +94,13 @@ if __name__ == '__main__':
 
         commit_count = len(push['commits'])
         commits_text = ('one new commit' if commit_count == 1 else
-                        '{0} new commits'.format(commit_count))
-        pretext = '[{0}:{1}] {2}'.format(repo_name, branch, commits_text)
+                        '{} new commits'.format(commit_count))
+        pretext = '[{}:{}] {}'.format(repo_name, branch, commits_text)
         commits = []
         for commit in push.get('commits', []):
             abbrev = commit['id'][:7]
-            commits.append('{0}: {1} - {2}'.format(abbrev, commit['message'],
-                                                   commit['author']['name']))
+            commits.append('{}: {} - {}'.format(abbrev, commit['message'],
+                                                commit['author']['name']))
         attachment = slack.Attachment(fallback=pretext,
                                       pretext=pretext+':',
                                       color='#4183c4',
