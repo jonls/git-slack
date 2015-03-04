@@ -88,6 +88,10 @@ if __name__ == '__main__':
 
         branch = m.group(1)
         repo_name = push['repository']['full_name']
+
+        logger.info('Push received for {}, branch: {}'.format(repo_name,
+                                                              branch))
+
         commit_count = len(push['commits'])
         commits_text = ('one new commit' if commit_count == 1 else
                         '{0} new commits'.format(commit_count))
