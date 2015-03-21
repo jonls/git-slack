@@ -129,6 +129,18 @@ class _MarkupEscapeHelper(object):
     __float__ = lambda s: float(s._obj)
 
 
+class Link(object):
+    """URL link in Slack text"""
+    def __init__(self, url, title=None):
+        self._url = url
+        self._title = title
+
+    def __markup__(self):
+        if self._title is None:
+            return Markup('<{}>').format(self._url)
+        return Markup('<{}|{}>').format(self._url, self._title)
+
+
 class Message(object):
     """Slack WebHook message"""
     def __init__(self, text=None, username=None,
