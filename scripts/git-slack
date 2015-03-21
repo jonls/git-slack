@@ -5,7 +5,7 @@ import json
 import argparse
 import logging
 
-import pika
+from kombu import Connection, Exchange, Queue, Consumer, eventloop
 import yaml
 
 from git_slack import slack, response
@@ -32,20 +32,7 @@ if __name__ == '__main__':
 
     server_host = os.environ.get('AMQP_PORT_5672_TCP_ADDR', 'localhost')
     server_port = int(os.environ.get('AMQP_PORT_5672_TCP_PORT', '5672'))
-
-    connection_params = pika.ConnectionParameters(host=server_host,
-                                                  port=server_port)
-    connection = pika.BlockingConnection(connection_params)
-    channel = connection.channel()
-
-    channel.exchange_declare(exchange='git', type='topic')
-
-    result = channel.queue_declare(exclusive=True)
-    queue_name = result.method.queue
-
-    channel.queue_bind(exchange='git',
-                       queue=queue_name,
-                       routing_key='#')
+    server_address = 'amqp://{}:{}'.format(server_host, server_port)
 
     # Run Slack WebHook connector
     if 'slack' in config and 'webhook_url' in config['slack']:
@@ -68,31 +55,37 @@ if __name__ == '__main__':
         if 'channel' in config['slack']:
             slack_channel = str(config['slack']['channel'])
 
+    # Declare AMQP exchange and queue
+    git_exchange = Exchange('git', type='topic', durable=False)
+    queue = Queue(exchange=git_exchange, routing_key='#',
+                  exclusive=True)
+
     # Callback on Git push messages
-    def callback(ch, method, properties, body):
+    def callback(body, message):
         try:
-            push = json.loads(body)
-            message = response.message_from_push(push)
-            if message is not None and hook is not None:
-                hook.enqueue(message)
+            slack_message = response.message_from_push(body)
+            if slack_message is not None and hook is not None:
+                hook.enqueue(slack_message)
         except:
             logger.warning('Unable to process push:', exc_info=True)
 
-    channel.basic_consume(callback,
-                          queue=queue_name,
-                          no_ack=True)
+        message.ack()
 
     logger.info("Waiting for Git push messages...")
-    try:
-        channel.start_consuming()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        if hook is not None:
-            logger.info('Stopping Slack WebHook connector...')
-            hook.stop()
+
+    with Connection(server_address) as connection:
+        with Consumer(connection, queue, accept=['json'],
+                      callbacks=[callback]):
+            try:
+                for _ in eventloop(connection, timeout=1, ignore_timeouts=True):
+                    pass
+            except KeyboardInterrupt:
+                pass
+            finally:
+                if hook is not None:
+                    logger.info('Stopping Slack WebHook connector...')
+                    hook.stop()
 
         logger.info('Closing AMQP connection...')
-        connection.close()
 
     logger.info('Done.')

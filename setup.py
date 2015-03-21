@@ -21,7 +21,7 @@ setup(
     scripts=['scripts/git-slack'],
     install_requires=[
         'PyYAML',
-        'pika'
+        'kombu'
     ],
 
     test_suite='git_slack.tests'
