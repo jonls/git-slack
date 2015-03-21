@@ -9,7 +9,7 @@ with open('README.rst') as f:
 setup(
     name='git-slack',
     version='0.1',
-    license='GPLv3+',
+    license='BSD',
     url='http://jonls.dk',
     author='Jon Lund Steffensen',
     author_email='jonlst@gmail.com',
