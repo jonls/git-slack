@@ -70,11 +70,13 @@ if __name__ == '__main__':
 
     # Callback on Git push messages
     def callback(ch, method, properties, body):
-        push = json.loads(body)
-        message = response.message_from_push(push)
-
-        if message is not None and hook is not None:
-            hook.enqueue(message)
+        try:
+            push = json.loads(body)
+            message = response.message_from_push(push)
+            if message is not None and hook is not None:
+                hook.enqueue(message)
+        except:
+            logger.warning('Unable to process push:', exc_info=True)
 
     channel.basic_consume(callback,
                           queue=queue_name,
