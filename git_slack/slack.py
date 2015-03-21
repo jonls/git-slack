@@ -7,6 +7,8 @@ import json
 from threading import Thread
 from Queue import Queue
 import logging
+import string
+from collections import Mapping
 
 logger = logging.getLogger(__name__)
 
@@ -24,16 +26,107 @@ class Markup(unicode):
     def escape(cls, s):
         """Escape string into Markup object
 
-        If already escape, the same object is returned.
+        If already escape, or is an object that provides a custom
+        markup, the result of the __markup__ method is returned.
         """
-        if not isinstance(s, Markup):
+        if hasattr(s, '__markup__'):
+            return s.__markup__()
+        else:
             return Markup(s.replace('&', '&amp;').
                           replace('<', '&lt;').
                           replace('>', '&gt;'))
-        return s
+
+    def __markup__(self):
+        return self
+
+    def __add__(self, other):
+        return Markup(super(Markup, self).__add__(Markup.escape(other)))
+
+    def __radd__(self, other):
+        return Markup.escape(other).__add__(self)
+
+    def __mul__(self, count):
+        return Markup(super(Markup, self).__mul__(count))
+
+    def __rmul__(self, count):
+        return Markup(super(Markup, self).__rmul__(count))
+
+    def __mod__(self, arg):
+        if isinstance(arg, tuple):
+            arg = tuple(_MarkupEscapeHelper(x, Markup.escape) for x in arg)
+        else:
+            arg = _MarkupEscapeHelper(arg, Markup.escape)
+        return Markup(super(Markup, self).__mod__(arg))
+
+    def join(self, iterable):
+        return Markup(super(Markup, self).join(
+            Markup.escape(x) for x in iterable))
+
+    def format(self, *args, **kwargs):
+        formatter = _MarkupEscapeFormatter(Markup.escape)
+        kwargs = _MagicFormatMapping(args, kwargs)
+        return Markup(formatter.vformat(self, args, kwargs))
 
     def __repr__(self):
-        return 'Markup(' + super(Markup, self).__repr__() + ')'
+        return (self.__class__.__name__ +
+                '(' + super(Markup, self).__repr__() + ')')
+
+
+class _MagicFormatMapping(Mapping):
+    """Workaround mapping for Python standard library bug"""
+
+    def __init__(self, args, kwargs):
+        self._args = args
+        self._kwargs = kwargs
+        self._last_index = 0
+
+    def __getitem__(self, key):
+        if key == '':
+            index = self._last_index
+            self._last_index += 1
+            try:
+                return self._args[index]
+            except LookupError:
+                pass
+            key = str(index)
+        return self._kwargs[key]
+
+    def __iter__(self):
+        return iter(self._kwargs)
+
+    def __len__(self):
+        return len(self._kwargs)
+
+
+class _MarkupEscapeFormatter(string.Formatter):
+    """Formatter for Markup.format"""
+    def __init__(self, escape):
+        self._escape = escape
+
+    def format_field(self, value, format_spec):
+        if hasattr(value, '__markup__'):
+            if format_spec:
+                raise ValueError('Format specification not allowed'
+                                 ' with __markup__ object.')
+            s = value.__markup__()
+        else:
+            s = super(_MarkupEscapeFormatter, self).format_field(
+                value, format_spec)
+        return unicode(self._escape(s))
+
+
+class _MarkupEscapeHelper(object):
+    """Helper for Markup.__mod__"""
+
+    def __init__(self, obj, escape):
+        self._obj = obj
+        self._escape = escape
+
+    __getitem__ = lambda s, x: self.__class__(s._obj[x], s._escape)
+    __str__ = __unicode__ = lambda s: unicode(s._escape(s._obj))
+    __repr__ = lambda s: str(s._escape(repr(s._obj)))
+    __int__ = lambda s: int(s._obj)
+    __float__ = lambda s: float(s._obj)
 
 
 class Message(object):
