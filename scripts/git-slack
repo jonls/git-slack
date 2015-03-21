@@ -2,16 +2,16 @@
 
 import os
 import json
-import re
 import argparse
 import logging
 
 import pika
 import yaml
 
-from git_slack import slack
+from git_slack import slack, response
 
 logger = logging.getLogger(__name__)
+
 
 if __name__ == '__main__':
     # Parse command line arguments
@@ -71,45 +71,9 @@ if __name__ == '__main__':
     # Callback on Git push messages
     def callback(ch, method, properties, body):
         push = json.loads(body)
+        message = response.message_from_push(push)
 
-        # No messages on branch delete
-        if push['deleted']:
-            logger.info('Push is a delete; no message generated.')
-            return
-
-        m = re.match(r'^refs/heads/(.*)$', push['ref'])
-        if not m:
-            logger.info('Push is not to a branch; no message generated.')
-            return
-
-        if len(push['commits']) == 0:
-            logger.info('Push contains no new commits; no message generated.')
-            return
-
-        branch = m.group(1)
-        repo_name = push['repository']['full_name']
-
-        logger.info('Push received for {}, branch: {}'.format(repo_name,
-                                                              branch))
-
-        commit_count = len(push['commits'])
-        commits_text = ('one new commit' if commit_count == 1 else
-                        '{} new commits'.format(commit_count))
-        pretext = '[{}:{}] {}'.format(repo_name, branch, commits_text)
-        commits = []
-        for commit in push.get('commits', []):
-            abbrev = commit['id'][:7]
-            commits.append('{}: {} - {}'.format(abbrev, commit['message'],
-                                                commit['author']['name']))
-        attachment = slack.Attachment(fallback=pretext,
-                                      pretext=pretext+':',
-                                      color='#4183c4',
-                                      text='\n'.join(commits))
-        message = slack.Message(attachments=[attachment],
-                                username=slack_username,
-                                channel=slack_channel)
-
-        if hook is not None:
+        if message is not None and hook is not None:
             hook.enqueue(message)
 
     channel.basic_consume(callback,
