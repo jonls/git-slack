@@ -2,10 +2,11 @@
 """Slack integration functions"""
 
 import time
-import urllib2
+from urllib.error import HTTPError
+from urllib import request
 import json
 from threading import Thread
-from Queue import Queue
+from queue import Queue
 import logging
 import string
 from collections import Mapping
@@ -20,7 +21,7 @@ class AttachmentColor(object):
     Danger = 'danger'
 
 
-class Markup(unicode):
+class Markup(str):
     """Markup-safe string that does not need escaping"""
     @classmethod
     def escape(cls, s):
@@ -112,7 +113,7 @@ class _MarkupEscapeFormatter(string.Formatter):
         else:
             s = super(_MarkupEscapeFormatter, self).format_field(
                 value, format_spec)
-        return unicode(self._escape(s))
+        return str(self._escape(s))
 
 
 class _MarkupEscapeHelper(object):
@@ -123,7 +124,7 @@ class _MarkupEscapeHelper(object):
         self._escape = escape
 
     __getitem__ = lambda s, x: self.__class__(s._obj[x], s._escape)
-    __str__ = __unicode__ = lambda s: unicode(s._escape(s._obj))
+    __str__ = __unicode__ = lambda s: str(s._escape(s._obj))
     __repr__ = lambda s: str(s._escape(repr(s._obj)))
     __int__ = lambda s: int(s._obj)
     __float__ = lambda s: float(s._obj)
@@ -236,14 +237,14 @@ class SlackWebHook(Thread):
 
             # Post to endpoint
             data = json.dumps(message.document())
-            req = urllib2.Request(self._endpoint, data,
+            req = request.Request(self._endpoint, data,
                                   {'Content-Type': 'application/json'})
             try:
-                f = urllib2.urlopen(req)
+                f = request.urlopen(req)
                 response = f.read()
                 f.close()
                 retry_after = 0
-            except urllib2.HTTPError as e:
+            except HTTPError as e:
                 if e.code == 429:
                     retry_after = int(e.headers.get('Retry-After', '0'))
                 else:

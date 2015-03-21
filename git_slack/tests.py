@@ -44,21 +44,21 @@ class TestPushResponse(unittest.TestCase):
         message = response.message_from_push(self.minimal_push).document()
         self.assertIn('attachments', message)
         self.assertIsInstance(message['attachments'], list)
-        self.assertEquals(len(message['attachments']), 1)
+        self.assertEqual(len(message['attachments']), 1)
 
     def test_minimal_push_attachment_has_fallback(self):        
         message = response.message_from_push(self.minimal_push).document()
         attachment = message['attachments'][0]
         self.assertIn('fallback', attachment)
-        self.assertEquals(attachment['fallback'],
-                          '[testing:master] one new commit')
+        self.assertEqual(attachment['fallback'],
+                         '[testing:master] one new commit')
 
     def test_minimal_push_attachment_has_pretext(self):
         message = response.message_from_push(self.minimal_push).document()
         attachment = message['attachments'][0]
         self.assertIn('pretext', attachment)
-        self.assertEquals(attachment['pretext'],
-                          '[testing:master] one new commit:')
+        self.assertEqual(attachment['pretext'],
+                         '[testing:master] one new commit:')
 
     def test_minimal_push_attachment_has_color(self):
         message = response.message_from_push(self.minimal_push).document()
@@ -69,8 +69,8 @@ class TestPushResponse(unittest.TestCase):
         message = response.message_from_push(self.minimal_push).document()
         attachment = message['attachments'][0]
         self.assertIn('text', attachment)
-        self.assertEquals(attachment['text'],
-                          slack.Markup('a697150: Test commit - Test Person'))
+        self.assertEqual(attachment['text'],
+                         slack.Markup('a697150: Test commit - Test Person'))
 
     def test_tag_push_creates_no_message(self):
         push = self.minimal_push
@@ -97,13 +97,13 @@ class TestPushResponse(unittest.TestCase):
         message = response.message_from_push(
             self.minimal_push, slack_username='testuser').document()
         self.assertIn('username', message)
-        self.assertEquals(message['username'], 'testuser')
+        self.assertEqual(message['username'], 'testuser')
 
     def test_minimal_push_with_custom_channel(self):
         message = response.message_from_push(
             self.minimal_push, slack_channel='#mychannel').document()
         self.assertIn('channel', message)
-        self.assertEquals(message['channel'], '#mychannel')
+        self.assertEqual(message['channel'], '#mychannel')
 
     def test_minimal_push_with_linked_repo(self):
         push = self.minimal_push
@@ -111,13 +111,13 @@ class TestPushResponse(unittest.TestCase):
         message = response.message_from_push(push).document()
         attachment = message['attachments'][0]
 
-        self.assertEquals(attachment['fallback'],
-                          '[testing:master] one new commit')
+        self.assertEqual(attachment['fallback'],
+                         '[testing:master] one new commit')
 
         pretext = slack.Markup(
             '[<http://example.com/testing|testing>:master]'
             ' one new commit:')
-        self.assertEquals(attachment['pretext'], pretext)
+        self.assertEqual(attachment['pretext'], pretext)
 
     def test_minimal_push_with_linked_branch(self):
         push = self.minimal_push
@@ -125,14 +125,14 @@ class TestPushResponse(unittest.TestCase):
         message = response.message_from_push(push).document()
         attachment = message['attachments'][0]
 
-        self.assertEquals(attachment['fallback'],
-                          '[testing:master] one new commit')
+        self.assertEqual(attachment['fallback'],
+                         '[testing:master] one new commit')
 
         pretext = slack.Markup(
             '[testing:'
             '<http://example.com/testing?t=tree&amp;b=master|master>'
             '] one new commit:')
-        self.assertEquals(attachment['pretext'], pretext)
+        self.assertEqual(attachment['pretext'], pretext)
 
     def test_minimal_push_with_linked_commit(self):
         push = self.minimal_push
@@ -144,4 +144,4 @@ class TestPushResponse(unittest.TestCase):
         text = slack.Markup(
             '<http://example.com/testing?t=commit&amp;c=a697150|a697150>:'
             ' Test commit - Test Person')
-        self.assertEquals(attachment['text'], text)
+        self.assertEqual(attachment['text'], text)
