@@ -22,5 +22,7 @@ setup(
     install_requires=[
         'PyYAML',
         'pika'
-    ]
+    ],
+
+    test_suite='git_slack.tests'
 )
