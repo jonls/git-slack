@@ -237,7 +237,7 @@ class SlackWebHook(Thread):
 
             # Post to endpoint
             data = json.dumps(message.document())
-            req = request.Request(self._endpoint, data,
+            req = request.Request(self._endpoint, data.encode(),
                                   {'Content-Type': 'application/json'})
             try:
                 f = request.urlopen(req)
