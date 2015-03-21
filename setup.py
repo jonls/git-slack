@@ -14,7 +14,7 @@ setup(
     author='Jon Lund Steffensen',
     author_email='jonlst@gmail.com',
 
-    description='Post Git push information from AMPQ to Slack',
+    description='Post Git push information from AMQP to Slack',
     long_description=long_description,
 
     packages=['git_slack'],

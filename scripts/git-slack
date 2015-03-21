@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 if __name__ == '__main__':
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description='Post Git push information from AMPQ to Slack')
+        description='Post Git push information from AMQP to Slack')
     parser.add_argument('--config', metavar='file',
                         help='Configuration file')
     args = parser.parse_args()
@@ -30,8 +30,8 @@ if __name__ == '__main__':
     else:
         config = {}
 
-    server_host = os.environ.get('RABBITMQ_PORT_5672_TCP_ADDR', 'localhost')
-    server_port = int(os.environ.get('RABBITMQ_PORT_5672_TCP_PORT', '5672'))
+    server_host = os.environ.get('AMQP_PORT_5672_TCP_ADDR', 'localhost')
+    server_port = int(os.environ.get('AMQP_PORT_5672_TCP_PORT', '5672'))
 
     connection_params = pika.ConnectionParameters(host=server_host,
                                                   port=server_port)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
             logger.info('Stopping Slack WebHook connector...')
             hook.stop()
 
-        logger.info('Closing AMPQ connection...')
+        logger.info('Closing AMQP connection...')
         connection.close()
 
     logger.info('Done.')

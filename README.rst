@@ -1,9 +1,12 @@
 Git-Slack
 ============
 
-A daemon to post Git push information to Slack. It uses AMPQ to obtain
-Git push information. The information must be sent to an AMPQ server from
-the ``post-receive`` hook of the Git repositories.
+A daemon to post Git push information to Slack. It uses AMQP to obtain
+Git push information. The information must be sent to an AMQP server from
+the ``post-receive`` hook of the Git repositories. See
+`jonls/amqp-post-receive`_ for an example ``post-receive`` hook.
+
+.. _jonls/amqp-post-receive: https://github.com/jonls/amqp-post-receive
 
 Configuration
 -------------
