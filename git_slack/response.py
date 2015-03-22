@@ -9,6 +9,59 @@ from git_slack import slack
 logger = logging.getLogger(__name__)
 
 
+class RoutingError(Exception):
+    """Error applying routing errors"""
+
+
+def apply_routing(push, routing, slack_username=None, slack_channel=None):
+    """Apply routing rules and yield push, username, channel to be sent"""
+
+    m = re.match(r'^refs/heads/(.*)$', push['ref'])
+    if not m:
+        logger.info('Push is not to a branch; no message generated.')
+        return
+
+    branch = m.group(1)
+
+    for rule_id, rule in enumerate(routing):
+        if ('filter' in rule and
+                rule['filter'] not in ('include', 'exclude')):
+            raise RoutingError('Filter attribute of rule must be include'
+                               ' or exclude')
+
+        exclude = rule.get('filter', None) == 'exclude'
+        include = rule.get('filter', None) == 'include'
+
+        all_match = True
+
+        # Filter based on repository
+        if 'repository' in rule:
+            match = re.match(rule['repository']+r'\Z',
+                             push['repository']['full_name'])
+            all_match = match and all_match
+            if match and exclude or not match and include:
+                logger.info('Rule #{}: Filter based on repository'.format(
+                    rule_id))
+                return
+
+        # Filter based on branch
+        if 'branch' in rule:
+            match = re.match(rule['branch']+r'\Z', branch)
+            all_match = match and all_match
+            if match and exclude or not match and include:
+                logger.info('Rule #{}: Filter based on branch'.format(rule_id))
+                return
+
+        # Update Slack settings if matching
+        if all_match:
+            if 'username' in rule:
+                slack_username = rule['username']
+            if 'channel' in rule:
+                slack_channel = rule['channel']
+
+    yield push, slack_username, slack_channel
+
+
 def message_from_push(push, slack_username=None, slack_channel=None):
     """Return response message from Git push object"""
 

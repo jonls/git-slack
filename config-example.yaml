@@ -2,6 +2,18 @@ slack:
   # Put your Slack WebHook URL here
   webhook_url: https://hooks.slack.com/services/...
 
-  # You can change the username and channel
+  # You can change the default username and channel
   #username: my-git-bot
   #channel: '#random'
+
+# Example routing/filtering
+routing:
+  # Exclude Gitolite admin repository
+  - repository: gitolite-admin
+    filter: exclude
+  # Only include master branch
+  - branch: master
+    filter: include
+  # Route user repositories to a specific channel
+  - repository: user/.*
+    channel: '#userrepos'

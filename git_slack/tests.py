@@ -145,3 +145,181 @@ class TestPushResponse(unittest.TestCase):
             '<http://example.com/testing?t=commit&amp;c=a697150|a697150>:'
             ' Test commit - Test Person')
         self.assertEqual(attachment['text'], text)
+
+
+class TestRouting(unittest.TestCase):
+    def test_push_exclude_rule_applying_to_repository(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'exclude',
+            'repository': 'test.*'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [])
+
+    def test_push_exclude_rule_not_applying_to_repository(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'exclude',
+            'repository': 'user/.*'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [(push, None, None)])
+
+    def test_push_exclude_rule_applying_to_branch(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'exclude',
+            'branch': 'master'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [])
+
+    def test_push_exclude_rule_not_applying_to_branch(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'exclude',
+            'branch': 'release-.*'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [(push, None, None)])
+
+    def test_push_include_rule_applying_to_repository(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'include',
+            'repository': 'test.*'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [(push, None, None)])
+
+    def test_push_include_rule_not_applying_to_repository(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'include',
+            'repository': 'user/.*'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [])
+
+    def test_push_include_rule_applying_to_branch(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'include',
+            'branch': 'master'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [(push, None, None)])
+
+    def test_push_include_rule_not_applying_to_branch(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'include',
+            'branch': 'release-.*'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [])
+
+    def test_push_two_exclude_rules_not_applying(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'exclude',
+            'branch': 'release-.*'
+        }, {
+            'filter': 'exclude',
+            'repository': 'testings.*'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [(push, None, None)])
+
+    def test_push_two_include_rules_applying(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'include',
+            'branch': '.*'
+        }, {
+            'filter': 'include',
+            'repository': 'testing'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [(push, None, None)])
+
+    def test_push_include_rule_branch_and_repository(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'filter': 'include',
+            'repository': 'testing',
+            'branch': 'release-.*'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [])
+
+    def test_push_applying_rule_sets_username(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'repository': 'testing',
+            'username': 'test-user'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [(push, 'test-user', None)])
+
+    def test_push_applying_rule_sets_channel(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'repository': 'testing',
+            'channel': '#random'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        self.assertEqual(result, [(push, None, '#random')])
