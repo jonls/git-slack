@@ -9,12 +9,12 @@ from git_slack import slack
 logger = logging.getLogger(__name__)
 
 
-class RoutingError(Exception):
-    """Error applying routing errors"""
+class RulesError(Exception):
+     """Error while applying rules"""
 
 
-def apply_routing(push, routing, slack_username=None, slack_channel=None):
-    """Apply routing rules and yield push, username, channel to be sent"""
+def apply_rules(push, rules, slack_username=None, slack_channel=None):
+    """Apply rules and yield push, username, channel to be sent"""
 
     m = re.match(r'^refs/heads/(.*)$', push['ref'])
     if not m:
@@ -23,11 +23,11 @@ def apply_routing(push, routing, slack_username=None, slack_channel=None):
 
     branch = m.group(1)
 
-    for rule_id, rule in enumerate(routing):
+    for rule_id, rule in enumerate(rules):
         if ('filter' in rule and
                 rule['filter'] not in ('include', 'exclude')):
-            raise RoutingError('Filter attribute of rule must be include'
-                               ' or exclude')
+            raise RulesError('Filter attribute of rule must be include'
+                             ' or exclude')
 
         exclude = rule.get('filter', None) == 'exclude'
         include = rule.get('filter', None) == 'include'

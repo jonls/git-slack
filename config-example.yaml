@@ -6,8 +6,8 @@ slack:
   #username: my-git-bot
   #channel: '#random'
 
-# Example routing/filtering
-routing:
+# Example rule set
+rules:
   # Exclude Gitolite admin repository
   - repository: gitolite-admin
     filter: exclude

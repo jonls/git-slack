@@ -147,18 +147,18 @@ class TestPushResponse(unittest.TestCase):
         self.assertEqual(attachment['text'], text)
 
 
-class TestRouting(unittest.TestCase):
+class TestRules(unittest.TestCase):
     def test_push_exclude_rule_applying_to_repository(self):
         push = {
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'exclude',
             'repository': 'test.*'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [])
 
     def test_push_exclude_rule_not_applying_to_repository(self):
@@ -166,12 +166,12 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'exclude',
             'repository': 'user/.*'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [(push, None, None)])
 
     def test_push_exclude_rule_applying_to_branch(self):
@@ -179,12 +179,12 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'exclude',
             'branch': 'master'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [])
 
     def test_push_exclude_rule_not_applying_to_branch(self):
@@ -192,12 +192,12 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'exclude',
             'branch': 'release-.*'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [(push, None, None)])
 
     def test_push_include_rule_applying_to_repository(self):
@@ -205,12 +205,12 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'include',
             'repository': 'test.*'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [(push, None, None)])
 
     def test_push_include_rule_not_applying_to_repository(self):
@@ -218,12 +218,12 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'include',
             'repository': 'user/.*'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [])
 
     def test_push_include_rule_applying_to_branch(self):
@@ -231,12 +231,12 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'include',
             'branch': 'master'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [(push, None, None)])
 
     def test_push_include_rule_not_applying_to_branch(self):
@@ -244,12 +244,12 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'include',
             'branch': 'release-.*'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [])
 
     def test_push_two_exclude_rules_not_applying(self):
@@ -257,7 +257,7 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'exclude',
             'branch': 'release-.*'
         }, {
@@ -265,7 +265,7 @@ class TestRouting(unittest.TestCase):
             'repository': 'testings.*'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [(push, None, None)])
 
     def test_push_two_include_rules_applying(self):
@@ -273,7 +273,7 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'include',
             'branch': '.*'
         }, {
@@ -281,7 +281,7 @@ class TestRouting(unittest.TestCase):
             'repository': 'testing'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [(push, None, None)])
 
     def test_push_include_rule_branch_and_repository(self):
@@ -289,13 +289,13 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'filter': 'include',
             'repository': 'testing',
             'branch': 'release-.*'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [])
 
     def test_push_applying_rule_sets_username(self):
@@ -303,12 +303,12 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'repository': 'testing',
             'username': 'test-user'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [(push, 'test-user', None)])
 
     def test_push_applying_rule_sets_channel(self):
@@ -316,12 +316,12 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'repository': 'testing',
             'channel': '#random'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         self.assertEqual(result, [(push, None, '#random')])
 
     def test_push_applying_rule_sets_repository_url(self):
@@ -329,11 +329,11 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'repository_url': 'http://example.com/{repository}'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         new_push, _, _ = result[0]
 
         self.assertEqual(new_push, {
@@ -349,11 +349,11 @@ class TestRouting(unittest.TestCase):
             'ref': 'refs/heads/master',
             'repository': {'full_name': 'testing'}
         }
-        routing = [{
+        rules = [{
             'branch_url': 'http://example.com/{repository}/tree/{branch}'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         new_push, _, _ = result[0]
 
         self.assertEqual(new_push, {
@@ -372,11 +372,11 @@ class TestRouting(unittest.TestCase):
                 {'id': 'a697150fd92f21ca186ac0f43cdef6000e6c3d2f'}
             ]
         }
-        routing = [{
+        rules = [{
             'commit_url': 'http://example.com/{repository}/commit/{commit}'
         }]
 
-        result = list(response.apply_routing(push, routing))
+        result = list(response.apply_rules(push, rules))
         new_push, _, _ = result[0]
 
         self.assertEqual(new_push, {

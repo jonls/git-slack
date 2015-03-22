@@ -55,8 +55,8 @@ if __name__ == '__main__':
         if 'channel' in config['slack']:
             slack_channel = str(config['slack']['channel'])
 
-    # Define routing rules
-    routing = config.get('routing', [])
+    # Define routing/filtering rules
+    rules = config.get('rules', [])
 
     # Declare AMQP exchange and queue
     git_exchange = Exchange('git', type='topic', durable=False)
@@ -66,8 +66,8 @@ if __name__ == '__main__':
     # Callback on Git push messages
     def callback(body, message):
         try:
-            for push, username, channel in response.apply_routing(
-                    body, routing, slack_username, slack_channel):
+            for push, username, channel in response.apply_rules(
+                    body, rules, slack_username, slack_channel):
                 slack_message = response.message_from_push(
                     push, username, channel)
                 if slack_message is not None and hook is not None:
