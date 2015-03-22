@@ -52,12 +52,42 @@ def apply_routing(push, routing, slack_username=None, slack_channel=None):
                 logger.info('Rule #{}: Filter based on branch'.format(rule_id))
                 return
 
-        # Update Slack settings if matching
         if all_match:
+            # Update Slack settings if matching
             if 'username' in rule:
                 slack_username = rule['username']
             if 'channel' in rule:
                 slack_channel = rule['channel']
+
+            # Update repository URL if matching
+            if 'repository_url' in rule:
+                repo_url = rule['repository_url'].format(
+                    repository=push['repository']['full_name'])
+                if repo_url != '':
+                    push['repository']['url'] = repo_url
+                else:
+                    push['repository'].pop('url', None)
+
+            # Update branch URL if matching
+            if 'branch_url' in rule:
+                branch_url = rule['branch_url'].format(
+                    repository=push['repository']['full_name'],
+                    branch=branch)
+                if branch_url != '':
+                    push['url'] = branch_url
+                else:
+                    push.pop('url', None)
+
+            # Update commit URLs if matching
+            if 'commit_url' in rule:
+                for commit in push['commits']:
+                    commit_url = rule['commit_url'].format(
+                        repository=push['repository']['full_name'],
+                        branch=branch, commit=commit['id'])
+                    if commit_url != '':
+                        commit['url'] = commit_url
+                    else:
+                        commit.pop('url', None)
 
     yield push, slack_username, slack_channel
 

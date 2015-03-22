@@ -323,3 +323,70 @@ class TestRouting(unittest.TestCase):
 
         result = list(response.apply_routing(push, routing))
         self.assertEqual(result, [(push, None, '#random')])
+
+    def test_push_applying_rule_sets_repository_url(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'repository_url': 'http://example.com/{repository}'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        new_push, _, _ = result[0]
+
+        self.assertEqual(new_push, {
+            'ref': 'refs/heads/master',
+            'repository': {
+                'full_name': 'testing',
+                'url': 'http://example.com/testing'
+            }
+        })
+
+    def test_push_applying_rule_sets_branch_url(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'}
+        }
+        routing = [{
+            'branch_url': 'http://example.com/{repository}/tree/{branch}'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        new_push, _, _ = result[0]
+
+        self.assertEqual(new_push, {
+            'ref': 'refs/heads/master',
+            'url': 'http://example.com/testing/tree/master',
+            'repository': {
+                'full_name': 'testing'
+            }
+        })
+
+    def test_push_applying_rule_sets_commit_url(self):
+        push = {
+            'ref': 'refs/heads/master',
+            'repository': {'full_name': 'testing'},
+            'commits': [
+                {'id': 'a697150fd92f21ca186ac0f43cdef6000e6c3d2f'}
+            ]
+        }
+        routing = [{
+            'commit_url': 'http://example.com/{repository}/commit/{commit}'
+        }]
+
+        result = list(response.apply_routing(push, routing))
+        new_push, _, _ = result[0]
+
+        self.assertEqual(new_push, {
+            'ref': 'refs/heads/master',
+            'repository': {
+                'full_name': 'testing'
+            },
+            'commits': [
+                {'id': 'a697150fd92f21ca186ac0f43cdef6000e6c3d2f',
+                 'url': ('http://example.com/testing/commit/'
+                         'a697150fd92f21ca186ac0f43cdef6000e6c3d2f')
+             }]
+        })

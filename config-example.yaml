@@ -17,3 +17,9 @@ routing:
   # Route user repositories to a specific channel
   - repository: user/.*
     channel: '#userrepos'
+
+  # Set URLs for repository/branch/commit
+  # (using Python format substitution)
+  - repository_url: http://example.com/{repository}
+    branch_url: http://example.com/{repository}/tree/{branch}
+    commit_url: http://example.com/{repository}/commit/{commit}
